@@ -1,5 +1,6 @@
 package ntut.csie.releaseService.useCase.release.edit;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,24 +24,49 @@ public class EditReleaseUseCaseImpl implements EditReleaseUseCase, EditReleaseIn
 	@Override
 	public void execute(EditReleaseInput input, EditReleaseOutput output) {
 		String releaseId = input.getReleaseId();
+		String name = input.getName();
+		String startDate = input.getStartDate();
+		String endDate = input.getEndDate();
+		String description = input.getDescription();
 		Release release = releaseRepository.getReleaseById(releaseId);
 		if(release == null) {
 			output.setEditSuccess(false);
-			output.setOverlap(false);
-			output.setErrorMessage("Sorry, the sprint is not exist.");
+			output.setErrorMessage("Sorry, the release is not exist!");
+			return;
+		}
+		String exceptionMessage = "";
+		if(name == null || name.isEmpty()) {
+			exceptionMessage += "The name of the release should be required!\n";
+		}
+		if(startDate == null || startDate.isEmpty()) {
+			exceptionMessage += "The start date of the release should be required!\n";
+		}
+		if(endDate == null || endDate.isEmpty()) {
+			exceptionMessage += "The end date of the release should be required!\n";
+		}
+		if(description == null || description.isEmpty()) {
+			exceptionMessage += "The description of the release should be required!\n";
+		}
+		if(!exceptionMessage.isEmpty()) {
+			output.setEditSuccess(false);
+			output.setErrorMessage(exceptionMessage);
 			return;
 		}
 		release.setName(input.getName());
 		release.setStartDate(input.getStartDate());
 		release.setEndDate(input.getEndDate());
 		release.setDescription(input.getDescription());
-		if(isReleaseOverlap(release)) {
-			output.setEditSuccess(false);
-			output.setOverlap(true);
-			output.setErrorMessage("Sorry, the start date or the end date is overlap with the other release.");
-			return;
-		}
 		try {
+			if(release.isReleaseStartDateAfterEndDate()) {
+				output.setEditSuccess(false);
+				output.setErrorMessage("Sorry, the start date must be before the end date!");
+				return;
+			}
+			if(isReleaseOverlap(release)) {
+				output.setEditSuccess(false);
+				output.setErrorMessage("Sorry, the start date or the end date is overlap with the other release!");
+				return;
+			}
 			releaseRepository.save(release);
 		} catch (Exception e) {
 			output.setEditSuccess(false);
@@ -48,10 +74,9 @@ public class EditReleaseUseCaseImpl implements EditReleaseUseCase, EditReleaseIn
 			return;
 		}
 		output.setEditSuccess(true);
-		output.setOverlap(false);
 	}
 	
-	private boolean isReleaseOverlap(Release thisRelease) {
+	private boolean isReleaseOverlap(Release thisRelease) throws ParseException {
 		List<Release> releaseList = new ArrayList<>(releaseRepository.getReleasesByProductId(thisRelease.getProductId()));
 		for(Release otherRelease : releaseList) {
 			if(!thisRelease.getReleaseId().equals(otherRelease.getReleaseId())) {

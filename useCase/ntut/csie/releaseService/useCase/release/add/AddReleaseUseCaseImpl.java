@@ -1,5 +1,6 @@
 package ntut.csie.releaseService.useCase.release.add;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,9 +33,14 @@ public class AddReleaseUseCaseImpl implements AddReleaseUseCase, AddReleaseInput
 					description(input.getDescription()).
 					productId(input.getProductId()).
 					build();
+			if(release.isReleaseStartDateAfterEndDate()) {
+				output.setAddSuccess(false);
+				output.setErrorMessage("Sorry, the start date must be before the end date!");
+				return;
+			}
 			if(isReleaseOverlap(release)) {
 				output.setAddSuccess(false);
-				output.setErrorMessage("Sorry, the start date or the end date is overlap with the other release.");
+				output.setErrorMessage("Sorry, the start date or the end date is overlap with the other release!");
 				return;
 			}
 			releaseRepository.save(release);
@@ -46,7 +52,7 @@ public class AddReleaseUseCaseImpl implements AddReleaseUseCase, AddReleaseInput
 		output.setAddSuccess(true);
 	}
 	
-	private boolean isReleaseOverlap(Release thisRelease) {
+	private boolean isReleaseOverlap(Release thisRelease) throws ParseException {
 		List<Release> releaseList = new ArrayList<>(releaseRepository.getReleasesByProductId(thisRelease.getProductId()));
 		for(Release otherRelease : releaseList) {
 			String otherStartDate = otherRelease.getStartDate();

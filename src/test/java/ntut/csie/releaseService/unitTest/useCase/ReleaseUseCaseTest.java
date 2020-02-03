@@ -41,7 +41,6 @@ public class ReleaseUseCaseTest {
 	
 	private TestFactory testFactory;
 	
-	private Release release;
 	private String productId;
 
 	@Before
@@ -51,11 +50,6 @@ public class ReleaseUseCaseTest {
 		testFactory = new TestFactory(fakeReleaseRepository);
 		
 		productId = "1";
-		String name = "Release ezKanban.";
-		String startDate = "2018-03-27";
-		String endDate = "2018-09-27";
-		String description = "1. Visualize Workflow 2. WIP Limit 3. Workflow Management";
-		release = testFactory.newRelease(name, startDate, endDate, description, productId);
 	}
 	
 	@After
@@ -72,20 +66,48 @@ public class ReleaseUseCaseTest {
 		
 		AddReleaseOutput output = addNewRelease(name, startDate, endDate, description, productId);
 		
-		assertTrue(output.isAddSuccess());
+		boolean isAddSuccess = output.isAddSuccess();
+		assertTrue(isAddSuccess);
 	}
 	
 	@Test
-	public void Should_ReturnErrorMessage_When_AddReleaseWithEmptyParamemter() {
-		String expectedErrorMessage = "The name of the release should not be null.\n" +
-				"The start date of the release should not be null.\n" +
-				"The end date of the release should not be null.\n" +
-				"The description of the release should not be null.\n";
+	public void Should_ReturnErrorMessage_When_AddReleaseWithNullParamemters() {
+		String name = null;
+		String startDate = null;
+		String endDate = null;
+		String description = null;
 		
-		AddReleaseOutput output = addNewRelease(null, null, null, null, productId);
+		AddReleaseOutput output = addNewRelease(name, startDate, endDate, description, null);
 		
-		assertFalse(output.isAddSuccess());
-		assertEquals(expectedErrorMessage, output.getErrorMessage());
+		boolean isAddSuccess = output.isAddSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The name of the release should be required!\n" + 
+				"The start date of the release should be required!\n" + 
+				"The end date of the release should be required!\n" + 
+				"The description of the release should be required!\n" + 
+				"The product id of the release should be required!\n";
+		assertFalse(isAddSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_AddReleaseWithEmptyParamemters() {
+		String name = "";
+		String startDate = "";
+		String endDate = "";
+		String description = "";
+		
+		AddReleaseOutput output = addNewRelease(name, startDate, endDate, description, "");
+		
+		boolean isAddSuccess = output.isAddSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The name of the release should be required!\n" + 
+				"The start date of the release should be required!\n" + 
+				"The end date of the release should be required!\n" + 
+				"The description of the release should be required!\n" + 
+				"The product id of the release should be required!\n";
+		assertFalse(isAddSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
 	}
 	
 	@Test
@@ -109,21 +131,16 @@ public class ReleaseUseCaseTest {
 			testFactory.newRelease(names[i], startDates[i], endDates[i], descriptions[i], productId);
 		}
 		
-		GetReleasesByProductIdOutput output = getReleasesByProductId();
+		GetReleasesByProductIdOutput output = getReleasesByProductId(productId);
 		List<ReleaseModel> releaseList = output.getReleaseList();
 		
-		assertEquals(release.getName(), releaseList.get(0).getName());
-		assertEquals(release.getStartDate(), releaseList.get(0).getStartDate());
-		assertEquals(release.getEndDate(), releaseList.get(0).getEndDate());
-		assertEquals(release.getDescription(), releaseList.get(0).getDescription());
 		for(int i = 0; i < numberOfNewReleases; i++) {
-			assertEquals(names[i], releaseList.get(i + 1).getName());
-			assertEquals(startDates[i], releaseList.get(i + 1).getStartDate());
-			assertEquals(endDates[i], releaseList.get(i + 1).getEndDate());
-			assertEquals(descriptions[i], releaseList.get(i + 1).getDescription());
+			assertEquals(names[i], releaseList.get(i).getName());
+			assertEquals(startDates[i], releaseList.get(i).getStartDate());
+			assertEquals(endDates[i], releaseList.get(i).getEndDate());
+			assertEquals(descriptions[i], releaseList.get(i).getDescription());
 		}
-		int expectedNumberOfReleases = 1 + numberOfNewReleases;
-		assertEquals(expectedNumberOfReleases, releaseList.size());
+		assertEquals(numberOfNewReleases, releaseList.size());
 	}
 	
 	@Test
@@ -147,7 +164,7 @@ public class ReleaseUseCaseTest {
 	}
 	
 	@Test
-	public void Should_ReturnErrorMessage_When_EditRelease() {
+	public void Should_ReturnErrorMessage_When_EditNotExistRelease() {
 		String editedName = "Release ezScrum2019.";
 		String editedStartDate = "2019-03-07";
 		String editedEndDate = "2019-09-27";
@@ -155,29 +172,91 @@ public class ReleaseUseCaseTest {
 		
 		EditReleaseOutput output = editRelease(null, editedName, editedStartDate, editedEndDate, editedDescription, productId);
 		
+		boolean isEditSuccess = output.isEditSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the release is not exist!";
+		assertFalse(isEditSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_EditReleaseWithNullParamemters() {
+		String name = "ezScrum v1.9";
+		String startDate = "2019-01-23";
+		String endDate = "2019-06-06";
+		String description = "Implement the product backlog, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		Release editedRelease = testFactory.newRelease(name, startDate, endDate, description, productId);
+		
+		String editedName = null;
+		String editedStartDate = null;
+		String editedEndDate = null;
+		String editedDescription = null;
+		
+		EditReleaseOutput output = editRelease(editedRelease.getReleaseId(), editedName, editedStartDate, editedEndDate, editedDescription, productId);
 		
 		boolean isEditSuccess = output.isEditSuccess();
-		String expectedErrorMessage = "Sorry, the sprint is not exist.";
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The name of the release should be required!\n" + 
+				"The start date of the release should be required!\n" + 
+				"The end date of the release should be required!\n" + 
+				"The description of the release should be required!\n";
 		assertFalse(isEditSuccess);
-		assertEquals(expectedErrorMessage, output.getErrorMessage());
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_EditReleaseWithEmptyParamemters() {
+		String name = "ezScrum v1.9";
+		String startDate = "2019-01-23";
+		String endDate = "2019-06-06";
+		String description = "Implement the product backlog, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		Release editedRelease = testFactory.newRelease(name, startDate, endDate, description, productId);
+		
+		String editedName = "";
+		String editedStartDate = "";
+		String editedEndDate = "";
+		String editedDescription = "";
+		
+		EditReleaseOutput output = editRelease(editedRelease.getReleaseId(), editedName, editedStartDate, editedEndDate, editedDescription, productId);
+		
+		boolean isEditSuccess = output.isEditSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The name of the release should be required!\n" + 
+				"The start date of the release should be required!\n" + 
+				"The end date of the release should be required!\n" + 
+				"The description of the release should be required!\n";
+		assertFalse(isEditSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
 	}
 	
 	@Test
 	public void Should_Success_When_DeleteRelease() {
-		DeleteReleaseOutput output = deleteRelease(release.getReleaseId());
+		String name = "Release ezScrum2019.";
+		String startDate = "2018-09-28";
+		String endDate = "2019-01-13";
+		String description = "Implement the product backlog, the release plan, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		Release deletedRelease = testFactory.newRelease(name, startDate, endDate, description, productId);
+		
+		String deletedReleaseId = deletedRelease.getReleaseId();
+		
+		DeleteReleaseOutput output = deleteRelease(deletedReleaseId);
 		
 		boolean isDeleteSuccess = output.isDeleteSuccess();
 		assertTrue(isDeleteSuccess);
 	}
 	
 	@Test
-	public void Should_ReturnErrorMessage_When_DeleteRelease() {
+	public void Should_ReturnErrorMessage_When_DeleteNotExistRelease() {
 		DeleteReleaseOutput output = deleteRelease(null);
 		
 		boolean isDeleteSuccess = output.isDeleteSuccess();
-		String expectedErrorMessage = "Sorry, the release is not exist.";
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the release is not exist!";
 		assertFalse(isDeleteSuccess);
-		assertEquals(expectedErrorMessage, output.getErrorMessage());
+		assertEquals(expectedErrorMessage, errorMessage);
 	}
 	
 	@Test
@@ -205,7 +284,7 @@ public class ReleaseUseCaseTest {
 		String deletedReleaseId = releaseList.get(1).getReleaseId();
 		deleteRelease(deletedReleaseId);
 		
-		GetReleasesByProductIdOutput output = getReleasesByProductId();
+		GetReleasesByProductIdOutput output = getReleasesByProductId(productId);
 		List<ReleaseModel> releaseListAfterDeleted = output.getReleaseList();
 		
 		for(int i = 0; i < releaseListAfterDeleted.size(); i++) {
@@ -215,17 +294,23 @@ public class ReleaseUseCaseTest {
 	
 	@Test
 	public void Should_ReturnOverlapMessage_When_AddOverlapRelease() {
+		String name = "ezScrum v1.9";
+		String startDate = "2019-01-23";
+		String endDate = "2019-06-06";
+		String description = "Implement the product backlog, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		testFactory.newRelease(name, startDate, endDate, description, productId);
+		
 		String overlapName = "Release ezScrum2019.";
-		String overlapStartDate = "2018-03-27";
-		String overlapEndDate = "2018-09-27";
+		String overlapStartDate = "2019-03-27";
+		String overlapEndDate = "2019-09-27";
 		String overlapDescription = "Implement the product backlog, the release plan, the sprint plan, the sprint backlog, and the retrospectve.";
 		
-		
 		AddReleaseOutput output = addNewRelease(overlapName, overlapStartDate, overlapEndDate, overlapDescription, productId);
+		
 		boolean isAddSuccess = output.isAddSuccess();
 		String errorMessage = output.getErrorMessage();
-		
-		String expectedErrorMessage = "Sorry, the start date or the end date is overlap with the other release.";
+		String expectedErrorMessage = "Sorry, the start date or the end date is overlap with the other release!";
 		assertFalse(isAddSuccess);
 		assertEquals(expectedErrorMessage, errorMessage);
 	}
@@ -237,18 +322,65 @@ public class ReleaseUseCaseTest {
 		String endDate = "2019-06-06";
 		String description = "Implement the product backlog, the sprint plan, the sprint backlog, and the retrospectve.";
 		
-		Release editedRelease = testFactory.newRelease(name, startDate, endDate, description, productId);
+		testFactory.newRelease(name, startDate, endDate, description, productId);
 		
-		String overlapName = "Release ezScrum2019.";
+		String overlapName = "Implement ezScrum2019.";
 		String overlapStartDate = "2018-03-27";
 		String overlapEndDate = "2018-09-27";
 		String overlapDescription = "Implement the product backlog, the release plan, the sprint plan, the sprint backlog, and the retrospectve.";
 		
-		EditReleaseOutput output = editRelease(editedRelease.getReleaseId(), overlapName, overlapStartDate, overlapEndDate, overlapDescription, productId);
+		Release editedOverlapRelease = testFactory.newRelease(overlapName, overlapStartDate, overlapEndDate, overlapDescription, productId);
+		
+		String editedOverlapReleaseId = editedOverlapRelease.getReleaseId();
+		String editedOverlapName = "Release ezScrum2019.";
+		String editedOverlapStartDate = "2019-03-27";
+		String editedOverlapEndDate = "2019-09-27";
+		String editedOverlapDescription = "Implement the feature about the tag and the attach file.";
+		
+		EditReleaseOutput output = editRelease(editedOverlapReleaseId, editedOverlapName, editedOverlapStartDate, editedOverlapEndDate, editedOverlapDescription, productId);
+		
 		boolean isEditSuccess = output.isEditSuccess();
 		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the start date or the end date is overlap with the other release!";
+		assertFalse(isEditSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_AddReleaseWithStartDateAfterEndDate() {
+		String name = "Release ezScrum2019.";
+		String startDate = "2018-09-28";
+		String endDate = "2018-09-27";
+		String description = "Implement the product backlog, the release plan, the sprint plan, the sprint backlog, and the retrospectve.";
 		
-		String expectedErrorMessage = "Sorry, the start date or the end date is overlap with the other release.";
+		AddReleaseOutput output = addNewRelease(name, startDate, endDate, description, productId);
+		
+		boolean isAddSuccess = output.isAddSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the start date must be before the end date!";
+		assertFalse(isAddSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_EditReleaseWithStartDateAfterEndDate() {
+		String name = "ezScrum v1.9";
+		String startDate = "2019-01-23";
+		String endDate = "2019-06-06";
+		String description = "Implement the product backlog, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		Release editedRelease = testFactory.newRelease(name, startDate, endDate, description, productId);
+		
+		String editedName = "Release ezScrum2019.";
+		String editedStartDate = "2019-03-07";
+		String editedEndDate = "2019-03-06";
+		String editedDescription = "Implement the product backlog, the release plan, the sprint plan, the sprint backlog, and the retrospectve.";
+		
+		EditReleaseOutput output = editRelease(editedRelease.getReleaseId(), editedName, editedStartDate, editedEndDate, editedDescription, productId);
+		
+		boolean isEditSuccess = output.isEditSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the start date must be before the end date!";
 		assertFalse(isEditSuccess);
 		assertEquals(expectedErrorMessage, errorMessage);
 	}
@@ -264,10 +396,9 @@ public class ReleaseUseCaseTest {
 		AddReleaseOutput output = new AddReleaseRestfulAPI();
 		addReleaseUseCase.execute(input, output);
 		return output;
-		
 	}
 	
-	private GetReleasesByProductIdOutput getReleasesByProductId() {
+	private GetReleasesByProductIdOutput getReleasesByProductId(String productId) {
 		GetReleasesByProductIdUseCase getReleasesByProductIdUseCase = new GetReleasesByProductIdUseCaseImpl(fakeReleaseRepository);
 		GetReleasesByProductIdInput input = (GetReleasesByProductIdInput) getReleasesByProductIdUseCase;
 		input.setProductId(productId);

@@ -41,7 +41,7 @@ public class ScheduleBacklogItemToReleaseRestfulAPI implements ScheduleBacklogIt
 		} catch (JSONException e) {
 			e.printStackTrace();
 			output.setScheduleSuccess(false);
-			output.setErrorMessage("Sorry, please try again!");
+			output.setErrorMessage("Sorry, there is the service problem when schedule the backlog item to the release. Please contact to the system administrator!");
 			return output;
 		}
 		

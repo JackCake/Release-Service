@@ -64,7 +64,7 @@ public class SqlDatabaseHelper {
 				+ ReleaseTable.name + " Varchar(50) Not Null, "
 				+ ReleaseTable.startDate + " Date Not Null, "
 				+ ReleaseTable.endDate + " Date Not Null, "
-				+ ReleaseTable.description + " Varchar(256) Not Null, "
+				+ ReleaseTable.description + " Varchar(255) Not Null, "
 				+ ReleaseTable.productId + " Varchar(50) Not Null, "
 				+ "Primary Key (" + ReleaseTable.releaseId + ")"
 				+ ")";
@@ -144,12 +144,6 @@ public class SqlDatabaseHelper {
 	public PreparedStatement getPreparedStatement(String sql) throws SQLException {
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		return preparedStatement;
-	}
-	
-	public ResultSet getResultSet(String query) throws SQLException {
-		Statement statement = connection.createStatement();
-		ResultSet resultSet = statement.executeQuery(query);
-		return resultSet;
 	}
 	
 	public void closeStatement(Statement statement) {

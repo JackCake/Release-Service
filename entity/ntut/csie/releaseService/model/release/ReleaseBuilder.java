@@ -47,19 +47,22 @@ public class ReleaseBuilder {
 	
 	public Release build() throws Exception{
 		String exceptionMessage = "";
-		if(name == null) {
-			exceptionMessage += "The name of the release should not be null.\n";
+		if(name == null || name.isEmpty()) {
+			exceptionMessage += "The name of the release should be required!\n";
 		}
-		if(startDate == null) {
-			exceptionMessage += "The start date of the release should not be null.\n";
+		if(startDate == null || startDate.isEmpty()) {
+			exceptionMessage += "The start date of the release should be required!\n";
 		}
-		if(endDate == null) {
-			exceptionMessage += "The end date of the release should not be null.\n";
+		if(endDate == null || endDate.isEmpty()) {
+			exceptionMessage += "The end date of the release should be required!\n";
 		}
-		if(description == null) {
-			exceptionMessage += "The description of the release should not be null.\n";
+		if(description == null || description.isEmpty()) {
+			exceptionMessage += "The description of the release should be required!\n";
 		}
-		if(!exceptionMessage.equals("")) {
+		if(productId == null || productId.isEmpty()) {
+			exceptionMessage += "The product id of the release should be required!\n";
+		}
+		if(!exceptionMessage.isEmpty()) {
 			throw new Exception(exceptionMessage);
 		}
 		

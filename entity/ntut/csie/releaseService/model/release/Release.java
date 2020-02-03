@@ -34,20 +34,25 @@ public class Release {
 		scheduledBacklogItems = new ArrayList<>();
 	}
 	
-	public boolean isReleaseOverlap(String otherStartDate, String otherEndDate) {
+	public boolean isReleaseStartDateAfterEndDate() throws ParseException {
+		DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		long thisReleaseStartDate = 0;
+		long thisReleaseEndDate = 0;
+		thisReleaseStartDate = simpleDateFormat.parse(startDate).getTime();
+		thisReleaseEndDate = simpleDateFormat.parse(endDate).getTime();
+		return thisReleaseStartDate > thisReleaseEndDate;
+	}
+	
+	public boolean isReleaseOverlap(String otherStartDate, String otherEndDate) throws ParseException {
 		DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		long thisReleaseStartDate = 0;
 		long thisReleaseEndDate = 0;
 		long otherReleaseStartDate = 0;
 		long otherReleaseEndDate = 0;
-		try {
-			thisReleaseStartDate = simpleDateFormat.parse(startDate).getTime();
-			thisReleaseEndDate = simpleDateFormat.parse(endDate).getTime();
-			otherReleaseStartDate = simpleDateFormat.parse(otherStartDate).getTime();
-			otherReleaseEndDate = simpleDateFormat.parse(otherEndDate).getTime();
-		} catch (ParseException e) {
-			System.out.println(e.getMessage());
-		}
+		thisReleaseStartDate = simpleDateFormat.parse(startDate).getTime();
+		thisReleaseEndDate = simpleDateFormat.parse(endDate).getTime();
+		otherReleaseStartDate = simpleDateFormat.parse(otherStartDate).getTime();
+		otherReleaseEndDate = simpleDateFormat.parse(otherEndDate).getTime();
 		if((thisReleaseStartDate >= otherReleaseStartDate && thisReleaseStartDate <= otherReleaseEndDate) ||
 			(thisReleaseEndDate >= otherReleaseStartDate	&& thisReleaseEndDate <= otherReleaseEndDate) ||
 			(thisReleaseStartDate <= otherReleaseStartDate && thisReleaseEndDate >= otherReleaseEndDate)) {
@@ -69,8 +74,12 @@ public class Release {
 		return thisReleaseEndDate < today;
 	}
 	
-	public void schedule(String backlogItemId) {
-		addScheduledBacklogItem(backlogItemId);
+	public void schedule(String backlogItemId) throws Exception {
+		ScheduledBacklogItem scheduledBacklogItem = ScheduledBacklogItemBuilder.newInstance()
+				.backlogItemId(backlogItemId)
+				.releaseId(releaseId)
+				.build();
+		scheduledBacklogItems.add(scheduledBacklogItem);
 		DomainEventPublisher.getInstance().publish(new BacklogItemScheduled(
 				backlogItemId, name));
 	}
@@ -82,10 +91,7 @@ public class Release {
 	}
 	
 	public void addScheduledBacklogItem(String backlogItemId) {
-		ScheduledBacklogItem scheduledBacklogItem = ScheduledBacklogItemBuilder.newInstance()
-				.backlogItemId(backlogItemId)
-				.releaseId(releaseId)
-				.build();
+		ScheduledBacklogItem scheduledBacklogItem = new ScheduledBacklogItem(backlogItemId, releaseId);
 		scheduledBacklogItems.add(scheduledBacklogItem);
 	}
 	

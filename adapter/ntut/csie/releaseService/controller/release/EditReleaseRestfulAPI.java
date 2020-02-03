@@ -23,7 +23,6 @@ public class EditReleaseRestfulAPI implements EditReleaseOutput{
 	private EditReleaseUseCase editReleaseUseCase = applicationContext.newEditReleaseUseCase();
 	
 	private boolean editSuccess;
-	private boolean overlap;
 	private String errorMessage;
 
 	@PUT
@@ -49,7 +48,7 @@ public class EditReleaseRestfulAPI implements EditReleaseOutput{
 		} catch (JSONException e) {
 			e.printStackTrace();
 			output.setEditSuccess(false);
-			output.setErrorMessage("Sorry, please try again!");
+			output.setErrorMessage("Sorry, there is the service problem when edit the release. Please contact to the system administrator!");
 			return output;
 		}
 		
@@ -83,15 +82,5 @@ public class EditReleaseRestfulAPI implements EditReleaseOutput{
 	@Override
 	public void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
-	}
-
-	@Override
-	public boolean isOverlap() {
-		return overlap;
-	}
-
-	@Override
-	public void setOverlap(boolean overlap) {
-		this.overlap = overlap;
 	}
 }

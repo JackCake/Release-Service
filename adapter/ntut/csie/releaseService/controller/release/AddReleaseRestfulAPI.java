@@ -47,7 +47,7 @@ public class AddReleaseRestfulAPI implements AddReleaseOutput {
 		} catch (JSONException e) {
 			e.printStackTrace();
 			output.setAddSuccess(false);
-			output.setErrorMessage("Sorry, please try again!");
+			output.setErrorMessage("Sorry, there is the service problem when add the release. Please contact to the system administrator!");
 			return output;
 		}
 		

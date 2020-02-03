@@ -18,7 +18,7 @@ public class UnscheduleBacklogItemFromReleaseUseCaseImpl implements UnscheduleBa
 		Release release = releaseRepository.getReleaseById(input.getReleaseId());
 		if(release == null) {
 			output.setUnscheduleSuccess(false);
-			output.setErrorMessage("Sorry, the release is not exist.");
+			output.setErrorMessage("Sorry, the release is not exist!");
 			return;
 		}
 		release.unschedule(input.getBacklogItemId());

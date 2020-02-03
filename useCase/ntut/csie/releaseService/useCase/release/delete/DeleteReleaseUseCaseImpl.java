@@ -20,7 +20,7 @@ public class DeleteReleaseUseCaseImpl implements DeleteReleaseUseCase, DeleteRel
 		Release release = releaseRepository.getReleaseById(input.getReleaseId());
 		if(release == null) {
 			output.setDeleteSuccess(false);
-			output.setErrorMessage("Sorry, the release is not exist.");
+			output.setErrorMessage("Sorry, the release is not exist!");
 			return;
 		}
 		int orderId = release.getOrderId();

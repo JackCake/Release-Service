@@ -7,10 +7,6 @@ public interface EditReleaseOutput extends Output{
 	
 	public void setEditSuccess(boolean editSuccess);
 	
-	public boolean isOverlap();
-	
-	public void setOverlap(boolean overlap);
-	
 	public String getErrorMessage();
 	
 	public void setErrorMessage(String errorMessage);

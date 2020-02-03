@@ -18,11 +18,11 @@ public class ScheduleBacklogItemToReleaseUseCaseImpl implements ScheduleBacklogI
 		Release release = releaseRepository.getReleaseById(input.getReleaseId());
 		if(release == null) {
 			output.setScheduleSuccess(false);
-			output.setErrorMessage("Sorry, the release is not exist.");
+			output.setErrorMessage("Sorry, the release is not exist!");
 			return;
 		}
-		release.schedule(input.getBacklogItemId());
 		try {
+			release.schedule(input.getBacklogItemId());
 			releaseRepository.save(release);
 		} catch (Exception e) {
 			output.setScheduleSuccess(false);

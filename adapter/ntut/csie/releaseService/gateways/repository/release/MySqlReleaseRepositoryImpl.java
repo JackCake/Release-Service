@@ -76,7 +76,7 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 		} catch(SQLException e) {
 			sqlDatabaseHelper.transactionError();
 			e.printStackTrace();
-			throw new Exception("Sorry, there is the problem when save the release. Please try again!");
+			throw new Exception("Sorry, there is the database problem when save the release. Please contact to the system administrator!");
 		} finally {
 			sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 			sqlDatabaseHelper.releaseConnection();
@@ -93,17 +93,18 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 				removeScheduledBacklogItem(scheduledBacklogItem);
 			}
 			
-			String sql = String.format("Delete From %s Where %s = '%s'",
+			ReleaseData data = sprintMapper.transformToSprintData(release);
+			String sql = String.format("Delete From %s Where %s = ?",
 					ReleaseTable.tableName,
-					ReleaseTable.releaseId,
-					release.getReleaseId());
+					ReleaseTable.releaseId);
 			preparedStatement = sqlDatabaseHelper.getPreparedStatement(sql);
+			preparedStatement.setString(1, data.getReleaseId());
 			preparedStatement.executeUpdate();
 			sqlDatabaseHelper.transactionEnd();
 		} catch(SQLException e) {
 			sqlDatabaseHelper.transactionError();
 			e.printStackTrace();
-			throw new Exception("Sorry, there is the problem when remove the release. Please try again!");
+			throw new Exception("Sorry, there is the database problem when remove the release. Please contact to the system administrator!");
 		} finally {
 			sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 			sqlDatabaseHelper.releaseConnection();
@@ -115,14 +116,16 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 		if(!sqlDatabaseHelper.isTransacting()) {
 			sqlDatabaseHelper.connectToDatabase();
 		}
+		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		Release release = null;
 		try {
-			String query = String.format("Select * From %s Where %s = '%s'",
+			String sql = String.format("Select * From %s Where %s = ?",
 					ReleaseTable.tableName,
-					ReleaseTable.releaseId,
-					releaseId);
-			resultSet = sqlDatabaseHelper.getResultSet(query);
+					ReleaseTable.releaseId);
+			preparedStatement = sqlDatabaseHelper.getPreparedStatement(sql);
+			preparedStatement.setString(1, releaseId);
+			resultSet = preparedStatement.executeQuery();
 			if (resultSet.first()) {
 				int orderId = resultSet.getInt(ReleaseTable.orderId);
 				String name = resultSet.getString(ReleaseTable.name);
@@ -147,6 +150,7 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 			e.printStackTrace();
 		} finally {
 			sqlDatabaseHelper.closeResultSet(resultSet);
+			sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 			if(!sqlDatabaseHelper.isTransacting()) {
 				sqlDatabaseHelper.releaseConnection();
 			}
@@ -159,15 +163,17 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 		if(!sqlDatabaseHelper.isTransacting()) {
 			sqlDatabaseHelper.connectToDatabase();
 		}
+		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		Collection<Release> sprints = new ArrayList<>();
 		try {
-			String query = String.format("Select * From %s Where %s = '%s' Order By %s",
+			String sql = String.format("Select * From %s Where %s = ? Order By %s",
 					ReleaseTable.tableName, 
 					ReleaseTable.productId, 
-					productId, 
 					ReleaseTable.orderId);
-			resultSet = sqlDatabaseHelper.getResultSet(query);
+			preparedStatement = sqlDatabaseHelper.getPreparedStatement(sql);
+			preparedStatement.setString(1, productId);
+			resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				String releaseId = resultSet.getString(ReleaseTable.releaseId);
 				int orderId = resultSet.getInt(ReleaseTable.orderId);
@@ -194,6 +200,7 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 			e.printStackTrace();
 		} finally {
 			sqlDatabaseHelper.closeResultSet(resultSet);
+			sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 			if(!sqlDatabaseHelper.isTransacting()) {
 				sqlDatabaseHelper.releaseConnection();
 			}
@@ -214,24 +221,27 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 	}
 
 	private void removeScheduledBacklogItem(ScheduledBacklogItem scheduledBacklogItem) throws SQLException {
-		String sql = String.format("Delete From %s Where %s = '%s'",
+		ScheduledBacklogItemData data = scheduledBacklogItemMapper.transformToScheduledBacklogItemData(scheduledBacklogItem);
+		String sql = String.format("Delete From %s Where %s = ?",
 				ScheduledBacklogItemTable.tableName,
-				ScheduledBacklogItemTable.backlogItemId,
-				scheduledBacklogItem.getBacklogItemId());
+				ScheduledBacklogItemTable.backlogItemId);
 		PreparedStatement preparedStatement = sqlDatabaseHelper.getPreparedStatement(sql);
+		preparedStatement.setString(1, data.getBacklogItemId());
 		preparedStatement.executeUpdate();
 		sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 	}
 	
 	private Collection<ScheduledBacklogItemData> getScheduledBacklogItemDatasByReleaseId(String releaseId){
+		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		Collection<ScheduledBacklogItemData> scheduledBacklogItemDatas = new ArrayList<>();
 		try {
-			String query = String.format("Select * From %s Where %s = '%s'",
+			String sql = String.format("Select * From %s Where %s = ?",
 					ScheduledBacklogItemTable.tableName, 
-					ScheduledBacklogItemTable.releaseId, 
-					releaseId);
-			resultSet = sqlDatabaseHelper.getResultSet(query);
+					ScheduledBacklogItemTable.releaseId);
+			preparedStatement = sqlDatabaseHelper.getPreparedStatement(sql);
+			preparedStatement.setString(1, releaseId);
+			resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				String backlogItemId = resultSet.getString(ScheduledBacklogItemTable.backlogItemId);
 				
@@ -245,6 +255,7 @@ public class MySqlReleaseRepositoryImpl implements ReleaseRepository {
 			e.printStackTrace();
 		} finally {
 			sqlDatabaseHelper.closeResultSet(resultSet);
+			sqlDatabaseHelper.closePreparedStatement(preparedStatement);
 		}
 		return scheduledBacklogItemDatas;
 	}

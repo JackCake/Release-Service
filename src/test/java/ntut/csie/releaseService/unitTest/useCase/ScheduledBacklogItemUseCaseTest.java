@@ -44,7 +44,9 @@ public class ScheduledBacklogItemUseCaseTest {
 	
 	private TestFactory testFactory;
 	
+	private String backlogItemId;
 	private Release release;
+	private String releaseId;
 	
 	@Before
 	public void setUp() {
@@ -59,7 +61,9 @@ public class ScheduledBacklogItemUseCaseTest {
 		String startDate = "2018-03-27";
 		String endDate = "2018-09-27";
 		String description = "1. Visualize Workflow 2. WIP Limit 3. Workflow Management";
+		backlogItemId = "1";
 		release = testFactory.newRelease(name, startDate, endDate, description, productId);
+		releaseId = release.getReleaseId();
 	}
 	
 	@After
@@ -70,67 +74,106 @@ public class ScheduledBacklogItemUseCaseTest {
 	
 	@Test
 	public void Should_Success_When_ScheduleBacklogItemToRelease() {
-		String backlogItemId = "1";
+		int originalNumberOfScheduledBacklogItems = release.getScheduledBacklogItems().size();
 		
-		ScheduleBacklogItemToReleaseOutput output = scheduleBacklogItemToRelease(backlogItemId, release.getReleaseId());
+		ScheduleBacklogItemToReleaseOutput output = scheduleBacklogItemToRelease(backlogItemId, releaseId);
 		
-		assertTrue(output.isScheduleSuccess());
+		int newNumberOfScheduledBacklogItems = release.getScheduledBacklogItems().size();
+		
+		assertEquals(1, newNumberOfScheduledBacklogItems - originalNumberOfScheduledBacklogItems);
+		
+		boolean isScheduleSuccess = output.isScheduleSuccess();
+		assertTrue(isScheduleSuccess);
 	}
 	
 	@Test
 	public void Should_ReturnErrorMessage_When_ScheduleBacklogItemToNotExistRelease() {
-		String backlogItemId = "1";
 		ScheduleBacklogItemToReleaseOutput output = scheduleBacklogItemToRelease(backlogItemId, null);
 		
 		boolean isScheduleSuccess = output.isScheduleSuccess();
-		String expectedErrorMessage = "Sorry, the release is not exist.";
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the release is not exist!";
 		assertFalse(isScheduleSuccess);
-		assertEquals(expectedErrorMessage, output.getErrorMessage());
+		assertEquals(expectedErrorMessage, errorMessage);
 	}
 	
 	@Test
-	public void Should_ReturnScheduledBacklogItemList_When_GetScheduledBacklogItemsByReleaseId() {
-		String[] backlogItemIds = {"1", "2"};
+	public void Should_ReturnErrorMessage_When_ScheduleBacklogItemToReleaseWithNullBacklogItemId() {
+		ScheduleBacklogItemToReleaseOutput output = scheduleBacklogItemToRelease(null, releaseId);
+		
+		boolean isScheduleSuccess = output.isScheduleSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The backlog item id of the scheduled backlog item should be required!\n";
+		assertFalse(isScheduleSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnErrorMessage_When_ScheduleBacklogItemToReleaseWithEmptyBacklogItemId() {
+		ScheduleBacklogItemToReleaseOutput output = scheduleBacklogItemToRelease("", releaseId);
+		
+		boolean isScheduleSuccess = output.isScheduleSuccess();
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "The backlog item id of the scheduled backlog item should be required!\n";
+		assertFalse(isScheduleSuccess);
+		assertEquals(expectedErrorMessage, errorMessage);
+	}
+	
+	@Test
+	public void Should_ReturnScheduledBacklogItemList_When_GetScheduledBacklogItemsOfRelease() {
+		String[] backlogItemIds = {backlogItemId, "2"};
 		
 		int numberOfScheduledBacklogItems = backlogItemIds.length;
 		
 		for(int i = 0; i < numberOfScheduledBacklogItems; i++) {
-			scheduleBacklogItemToRelease(backlogItemIds[i], release.getReleaseId());
+			scheduleBacklogItemToRelease(backlogItemIds[i], releaseId);
 		}
 		
-		GetScheduledBacklogItemsByReleaseIdOutput output = getScheduledBacklogItemsByReleaseId(release.getReleaseId());
+		GetScheduledBacklogItemsByReleaseIdOutput output = getScheduledBacklogItemsByReleaseId(releaseId);
 		List<ScheduledBacklogItemModel> scheduledBacklogItemList = output.getScheduledBacklogItemList();
+		
+		for(int i = 0; i < numberOfScheduledBacklogItems; i++) {
+			assertEquals(backlogItemIds[i], scheduledBacklogItemList.get(i).getBacklogItemId());
+			assertEquals(releaseId, scheduledBacklogItemList.get(i).getReleaseId());
+		}
 		assertEquals(numberOfScheduledBacklogItems, scheduledBacklogItemList.size());
 	}
 	
 	@Test
 	public void Should_BacklogItemNotBelongToAnyRelease_When_UnscheduleBacklogItemFromRelease() {
-		String backlogItemId = "1";
-		scheduleBacklogItemToRelease(backlogItemId, release.getReleaseId());
+		scheduleBacklogItemToRelease(backlogItemId, releaseId);
+		int numberOfScheduledBacklogItemsBeforeUnscheduled = release.getScheduledBacklogItems().size();
 		
-		UnscheduleBacklogItemFromReleaseOutput output = unscheduleBacklogItemFromRelease(backlogItemId, release.getReleaseId());
+		UnscheduleBacklogItemFromReleaseOutput output = unscheduleBacklogItemFromRelease(backlogItemId, releaseId);
+		int numberOfScheduledBacklogItemsAfterUnscheduled = release.getScheduledBacklogItems().size();
 		
-		assertTrue(output.isUnscheduleSuccess());
+		assertEquals(1, numberOfScheduledBacklogItemsBeforeUnscheduled - numberOfScheduledBacklogItemsAfterUnscheduled);
+		
+		boolean isUnscheduleSuccess = output.isUnscheduleSuccess();
+		assertTrue(isUnscheduleSuccess);
 	}
 	
 	@Test
 	public void Should_ReturnErrorMessage_When_UnscheduleBacklogItemFromNotExistRelease() {
-		String backlogItemId = "1";
 		UnscheduleBacklogItemFromReleaseOutput output = unscheduleBacklogItemFromRelease(backlogItemId, null);
 		
 		boolean isUnscheduleSuccess = output.isUnscheduleSuccess();
-		String expectedErrorMessage = "Sorry, the release is not exist.";
+		String errorMessage = output.getErrorMessage();
+		String expectedErrorMessage = "Sorry, the release is not exist!";
 		assertFalse(isUnscheduleSuccess);
-		assertEquals(expectedErrorMessage, output.getErrorMessage());
+		assertEquals(expectedErrorMessage, errorMessage);
 	}
 	
 	@Test
-	public void Should_ReturnHistoryList_When_GetHistoriesByBacklogItemId() {
-		String backlogItemId = "1";
-		scheduleBacklogItemToRelease(backlogItemId, release.getReleaseId());
-		unscheduleBacklogItemFromRelease(backlogItemId, release.getReleaseId());
+	public void Should_ReturnHistoryList_When_GetHistoriesOfBacklogItem() {
+		scheduleBacklogItemToRelease(backlogItemId, releaseId);
+		unscheduleBacklogItemFromRelease(backlogItemId, releaseId);
 		
-		assertEquals(2, getHistoriesByBacklogItemId(backlogItemId).size());
+		GetHistoriesByBacklogItemIdOutput output = getHistoriesByBacklogItemId(backlogItemId);
+		List<HistoryModel> historyList = output.getHistoryList();
+		
+		int numberOfHistories = 2;
+		assertEquals(numberOfHistories, historyList.size());
 	}
 	
 	private ScheduleBacklogItemToReleaseOutput scheduleBacklogItemToRelease(String backlogItemId, String releaseId) {
@@ -162,12 +205,12 @@ public class ScheduledBacklogItemUseCaseTest {
 		return output;
 	}
 	
-	private List<HistoryModel> getHistoriesByBacklogItemId(String backlogItemId) {
+	private GetHistoriesByBacklogItemIdOutput getHistoriesByBacklogItemId(String backlogItemId) {
 		GetHistoriesByBacklogItemIdUseCase getHistoriesByBacklogItemIdUseCase = new GetHistoriesByBacklogItemIdUseCaseImpl(fakeEventStore);
 		GetHistoriesByBacklogItemIdInput input = (GetHistoriesByBacklogItemIdInput) getHistoriesByBacklogItemIdUseCase;
 		input.setBacklogItemId(backlogItemId);
 		GetHistoriesByBacklogItemIdOutput output = new GetHistoriesByBacklogItemIdRestfulAPI();
 		getHistoriesByBacklogItemIdUseCase.execute(input, output);
-		return output.getHistoryList();
+		return output;
 	}
 }
